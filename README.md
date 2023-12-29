@@ -22,5 +22,13 @@ Armazenando aqui pra deixar de lembrança e evidenciar a minha evolução confor
 - Acrescenta os anos 1950 a 2023 à string passada no argumento
 - ```python weak_pass.py {começo_da_senha}```
 
+### brutftp.py
+- Faz o bruteforce do serviço ftp
+- ```python brutftp.py IP usuario```
+
+### tranf.sh
+- Faz a transferência de zona do domínio informado
+- ```./transf.sh {domínio}```
+
 
 
