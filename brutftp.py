@@ -2,7 +2,7 @@
 import socket,sys,re
 
 if len(sys.argv) !=3:
-	print("Modo de uso: python brutfpt.py IP usuario")
+	print("Modo de uso: python brutftp.py IP usuario")
 	sys.exit()
 alvo = sys.argv[1]
 usuario = sys.argv[2]
