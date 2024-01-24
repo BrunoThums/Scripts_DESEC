@@ -10,6 +10,28 @@ print(){
     echo -e "\e[35m"$1"\e[0m"
 }
 
+verificar_dmarc() {
+    dmarc="$*"
+    # Usando expressão regular para encontrar o valor de p (politica) e capturá-lo
+    if [[ "$dmarc" =~ [pP]=[a-zA-Z]*\; ]]; then
+        politica_inicial="${BASH_REMATCH}"  # Obtém o último caractere da captura
+	politica="${politica_inicial:2:-1}"
+        # Verificar o caractere e imprimir a resposta correspondente
+        if [ "$politica" = "none" ]; then
+            echo -e "\e[91mDMARC LIBERADO:\e[0m \e[93mnone\e[0m \e[91m-> Não toma nenhuma ação. PERMITE MAIL SPOOFING \e[0m"
+        elif [ "$politica" = "quarantine" ]; then
+            echo -e "\e[93mDMARC SEMI-RESTRITIVO (SUSPEITO): \e[0m\e[91mquarantine\e[0m \e[93m-> O Mail Spoofing pode funcionar, mas será marcado como suspeito ou cairá na caixa de spam \e[0m"
+        elif [ "$politica" = "?" ]; then
+            echo -e "\e[92mDMARC RESTRITIVO (Rejeitar): \e[0m\e[91mrejecte[0m \e[92m-> Recusa o envio de emails \e[0m"
+        else
+            echo -e "\e[95mPolítica inválida:\e[0m\e[91m" $politica "\e[0m\e[95m\nPode permitir MAIL SPOOFING! \e[0m"
+        fi
+    else
+        echo -e "\e[95mAparentemente não está configurado.\nSUSCETÍVEL A MAIL SPOOFING! \e[0m"
+    fi
+    echo -e ""
+}
+
 verificar_spf() {
     spf="$*"
     # Usando expressão regular para encontrar "all" e capturar o caractere anterior
@@ -17,20 +39,20 @@ verificar_spf() {
         caractere_anterior="${BASH_REMATCH[1]}"  # Obtém o último caractere da captura
         # Verificar o caractere e imprimir a resposta correspondente
         if [ "$caractere_anterior" = "-" ]; then
-            echo -e "\e[92mSPF RESTRITIVO (FAIL): - Normalmente recusa o email \e[0m"
+            echo -e "\e[92mSPF RESTRITIVO (FAIL): \e[0m\e[93m-\e[0m \e[92mNormalmente recusa o email \e[0m"
         elif [ "$caractere_anterior" = "~" ]; then
-            echo -e "\e[93mSPF SEMI-RESTRITIVO (SOFTFAIL): ~ \nSUSCETÍVEL A MAIL SPOOFING \e[0m"
+            echo -e "\e[93mSPF SEMI-RESTRITIVO (SOFTFAIL): \e[0m\e[92m~\e[0m \e[93m\nSUSCETÍVEL A MAIL SPOOFING \e[0m"
         elif [ "$caractere_anterior" = "?" ]; then
-            echo -e "\e[91mSPF SEM POLÍTICA (NEUTRAL): ? Liberado \nSUSCETÍVEL A MAIL SPOOFING \e[0m"
+            echo -e "\e[91mSPF SEM POLÍTICA (NEUTRAL): \e[0m\e[93m? Liberado \e[0m \e[91m\nSUSCETÍVEL A MAIL SPOOFING \e[0m"
         elif [ "$caractere_anterior" = "+" ]; then
-            echo -e "\e[91mSPF LIBERADO (PASS): + Liberado \nSUSCETÍVEL A MAIL SPOOFING \e[0m"
+            echo -e "\e[91mSPF LIBERADO (PASS): \e[93m+ Liberado \e[0m\e[91m\nSUSCETÍVEL A MAIL SPOOFING \e[0m"
         else
-            echo -e "\e[95mCaractere inválido:" $caractere_anterior "\nSUSCETÍVEL A MAIL SPOOFING! \e[0m"
+            echo -e "\e[95mCaractere inválido:\e[91m" $caractere_anterior "\e[0m\e[91m\nSUSCETÍVEL A MAIL SPOOFING! \e[0m"
         fi
     else
         echo -e "\e[95mAparentemente não está configurado.\nSUSCETÍVEL A MAIL SPOOFING! \e[0m"
     fi
-    echo -e ""
+    echo -e ""    
 }
 
 automatize_host(){
@@ -50,9 +72,13 @@ automatize_host(){
     hinfo=$(host -t hinfo $site | egrep -v "has no|not found")
     [ -z "$hinfo" ] && echo -e "\e[90mNão encontrado\n\e[0m" || echo -e "$hinfo\n"
     
+    print "Configuração de DMARC"
+    dmarc=$(host -t txt _dmarc.$site | egrep -v "not found")
+    [ -z "$dmarc" ] && echo -e "\e[90mNão encontrado\n\e[0m" || (echo -e "$dmarc"; verificar_dmarc $dmarc)
+    
     print "Configuração de SPF"
     spf=$(host -t txt $site | egrep -v "not found")
-    [ -z "$spf" ] && echo -e "\e[90mNão encontrado\n\e[0m" || (echo -e "$spf\n"; verificar_spf $spf)
+    [ -z "$spf" ] && echo -e "\e[90mNão encontrado\n\e[0m" || (echo -e "$spf"; verificar_spf $spf)
 
     print "Servidores"
     servers=$(host -t ns $site | egrep -v "not found" | cut -d " " -f4 | sed 's/.$//' ) # Nomes de Servidores. ns1 -> registro de entradas de DNS (CNAME, registros de IP, subdomínios…) | ns2 -> backup
