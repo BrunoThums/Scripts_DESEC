@@ -41,7 +41,7 @@ verificar_spf() {
         if [ "$caractere_anterior" = "-" ]; then
             echo -e "\e[92mSPF RESTRITIVO (FAIL): \e[0m\e[93m-\e[0m \e[92mNormalmente recusa o email \e[0m"
         elif [ "$caractere_anterior" = "~" ]; then
-            echo -e "\e[93mSPF SEMI-RESTRITIVO (SOFTFAIL): \e[0m\e[92m~\e[0m \e[93m\nSUSCETÍVEL A MAIL SPOOFING \e[0m"
+            echo -e "\e[93mSPF SEMI-RESTRITIVO (SOFTFAIL): \e[0m\e[92m~\e[0m \e[93m\nSUSCETÍVEL A MAIL SPOOFING, mas pode cair na caixa de spam \e[0m"
         elif [ "$caractere_anterior" = "?" ]; then
             echo -e "\e[91mSPF SEM POLÍTICA (NEUTRAL): \e[0m\e[93m? Liberado \e[0m \e[91m\nSUSCETÍVEL A MAIL SPOOFING \e[0m"
         elif [ "$caractere_anterior" = "+" ]; then
