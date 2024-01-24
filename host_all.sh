@@ -38,7 +38,7 @@ automatize_host(){
     print ""
     
     print "IPv6"
-    host -t AAAA $site | egrep -v "has no" | cut -d " " -f5 | sed 's/.$//'
+    host -t AAAA $site | egrep -v "has no|not found" | cut -d " " -f5 | sed 's/.$//'
     print ""
         
     print "Servidor (es) de e-mail"
@@ -46,30 +46,30 @@ automatize_host(){
     print ""
 
     print "Informações do host"
-    host -t hinfo $site | egrep -v "has no"
+    host -t hinfo $site | egrep -v "has no|not found"
     print ""
     
     print "Configuração de SPF"
-    spf=$(host -t txt $site)
+    spf=$(host -t txt $site | egrep -v "not found")
     echo "$spf"
     verificar_spf $spf
     print ""    
 
     print "Servidores"
-    servers=$(host -t ns $site | cut -d " " -f4 | sed 's/.$//') # Nomes de Servidores. ns1 -> registro de entradas de DNS (CNAME, registros de IP, subdomínios…) | ns2 -> backup
+    servers=$(host -t ns $site | cut -d " " -f4 | sed 's/.$//' | egrep -v "not found") # Nomes de Servidores. ns1 -> registro de entradas de DNS (CNAME, registros de IP, subdomínios…) | ns2 -> backup
     echo "$servers"
     print ""
     
     print "AXFR"
     for server in $servers; do
     	echo -e "\e[95mTentando transferência de zona em:\e[0m \e[93m$server \e[0m"
-        host -l $site $server | egrep -v "failed|reset"
+        host -l $site $server | egrep -v "failed|reset|not found"
     done
     print ""
         
     # aqui precisa colocar subdomínios, senão NUNCA vai funcionar. Os ALIAS são específicos para subdomínios, isso INCLUI o www        
     print "CNAME/ALIAS (use com um subdomínio: host -t cname {site}"
-    host -t cname $site | egrep -v "has no" 
+    host -t cname $site | egrep -v "has no|not found" 
 }
 
 if [ "$1" ]; then
