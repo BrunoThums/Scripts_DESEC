@@ -28,48 +28,49 @@ verificar_spf() {
             echo -e "\e[95mCaractere inválido:" $caractere_anterior "\nSUSCETÍVEL A MAIL SPOOFING! \e[0m"
         fi
     else
-        echo -e "\e[95mAparentemente não está configurado!\nSUSCETÍVEL A MAIL SPOOFING! \e[0m"
+        echo -e "\e[95mAparentemente não está configurado.\nSUSCETÍVEL A MAIL SPOOFING! \e[0m"
     fi
+    echo -e ""
 }
 
 automatize_host(){
     print "IPv4"
-    host -t A $site | cut -d " " -f4 | sed 's/.$//'
-    print ""
+    ip=$(host -t A $site | egrep -v "not found" | cut -d " " -f4 | sed 's/.$//')
+    [ -z "$ip" ] && echo -e "\e[90mNão encontrado\n\e[0m" || echo -e "$ip\n"
     
     print "IPv6"
-    host -t AAAA $site | egrep -v "has no|not found" | cut -d " " -f5 | sed 's/.$//'
-    print ""
+    ip6=$(host -t AAAA $site | egrep -v "has no|not found" | cut -d " " -f5 | sed 's/.$//')
+    [ -z "$ip6" ] && echo -e "\e[90mNão encontrado\n\e[0m" || echo -e "$ip\n"
         
     print "Servidor (es) de e-mail"
-    host -t mx $site | cut -d " " -f7 | sed 's/.$//'
-    print ""
+    mx=$(host -t mx $site | cut -d " " -f7 | sed 's/.$//')
+    [ -z "$mx" ] && echo -e "\e[90mNão encontrado\n\e[0m" || echo -e "$mx\n"
 
     print "Informações do host"
-    host -t hinfo $site | egrep -v "has no|not found"
-    print ""
+    hinfo=$(host -t hinfo $site | egrep -v "has no|not found")
+    [ -z "$hinfo" ] && echo -e "\e[90mNão encontrado\n\e[0m" || echo -e "$hinfo\n"
     
     print "Configuração de SPF"
     spf=$(host -t txt $site | egrep -v "not found")
-    echo "$spf"
-    verificar_spf $spf
-    print ""    
+    [ -z "$spf" ] && echo -e "\e[90mNão encontrado\n\e[0m" || (echo -e "$spf\n"; verificar_spf $spf)
 
     print "Servidores"
-    servers=$(host -t ns $site | cut -d " " -f4 | sed 's/.$//' | egrep -v "not found") # Nomes de Servidores. ns1 -> registro de entradas de DNS (CNAME, registros de IP, subdomínios…) | ns2 -> backup
-    echo "$servers"
-    print ""
+    servers=$(host -t ns $site | egrep -v "not found" | cut -d " " -f4 | sed 's/.$//' ) # Nomes de Servidores. ns1 -> registro de entradas de DNS (CNAME, registros de IP, subdomínios…) | ns2 -> backup
+    [ -z "$servers" ] && echo -e "\e[90mNão encontrado\n\e[0m" || echo -e "$servers\n"
     
     print "AXFR"
+    [ -z "$servers" ] && echo -e "\e[90mNão encontrado\n\e[0m"
     for server in $servers; do
     	echo -e "\e[95mTentando transferência de zona em:\e[0m \e[93m$server \e[0m"
-        host -l $site $server | egrep -v "failed|reset|not found"
+        axfr=$(host -l $site $server | egrep -v "failed|reset|not found")
+        [ -z "$axfr" ] && echo -e "\e[90mFalhou\n\e[0m" || echo -e "$axfr\n"
     done
-    print ""
+
         
     # aqui precisa colocar subdomínios, senão NUNCA vai funcionar. Os ALIAS são específicos para subdomínios, isso INCLUI o www        
-    print "CNAME/ALIAS (use com um subdomínio: host -t cname {site}"
-    host -t cname $site | egrep -v "has no|not found" 
+    print "CNAME/ALIAS"
+    cname=$(host -t cname $site | egrep -v "has no|not found")
+    [ -z "$cname" ] && echo -e "\e[90mNão encontrado. Execute individualmente com o subdomínio: host -t cname {site}\n\e[0m" || echo -e "$cname\n"
 }
 
 if [ "$1" ]; then
