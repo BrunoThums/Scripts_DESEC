@@ -17,16 +17,18 @@ verificar_spf() {
         caractere_anterior="${BASH_REMATCH[1]}"  # Obtém o último caractere da captura
         # Verificar o caractere e imprimir a resposta correspondente
         if [ "$caractere_anterior" = "-" ]; then
-            echo -e "\e[92mSPF RESTRITIVO: - Normalmente recusa o email \e[0m"
+            echo -e "\e[92mSPF RESTRITIVO (FAIL): - Normalmente recusa o email \e[0m"
         elif [ "$caractere_anterior" = "~" ]; then
-            echo -e "\e[93mSPF SEMI-RESTRITIVO: ~   \e[0m"
+            echo -e "\e[93mSPF SEMI-RESTRITIVO (SOFTFAIL): ~ \nSUSCETÍVEL A MAIL SPOOFING \e[0m"
         elif [ "$caractere_anterior" = "?" ]; then
-            echo -e "\e[91mSPF SEM POLÍTICA: ? Liberado \n SUSCETÍVEL A MAIL SPOOFING \e[0m"
+            echo -e "\e[91mSPF SEM POLÍTICA (NEUTRAL): ? Liberado \nSUSCETÍVEL A MAIL SPOOFING \e[0m"
+        elif [ "$caractere_anterior" = "+" ]; then
+            echo -e "\e[91mSPF LIBERADO (PASS): + Liberado \nSUSCETÍVEL A MAIL SPOOFING \e[0m"
         else
-            echo -e "\e[95mSUSCETÍVEL A MAIL SPOOFING! Caractere inválido:" $caractere_anterior "\e[0m"
+            echo -e "\e[95mCaractere inválido:" $caractere_anterior "\nSUSCETÍVEL A MAIL SPOOFING! \e[0m"
         fi
     else
-        echo -e "\e[95mSUSCETÍVEL A MAIL SPOOFING! Aparentemente não está configurado! \e[0m"
+        echo -e "\e[95mAparentemente não está configurado!\nSUSCETÍVEL A MAIL SPOOFING! \e[0m"
     fi
 }
 
